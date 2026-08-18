@@ -5,6 +5,7 @@ from pathlib import Path
 import yaml
 
 from mcp_evals.errors import DiscoveryError, SpecValidationError
+from mcp_evals.mcp_client.http import discover_http
 from mcp_evals.mcp_client.stdio import discover_stdio
 from mcp_evals.models.server import ServerConfig
 from mcp_evals.models.spec import ToolCatalog
@@ -45,7 +46,9 @@ def discover_tools(config: ServerConfig, base_dir: Path | None = None) -> ToolCa
         )
 
     if config.transport == "http":
-        raise DiscoveryError("HTTP transport is not implemented in v0.2; use stdio or catalog.")
+        if not config.url:
+            raise DiscoveryError("http transport requires 'url'.")
+        return discover_http(config.url, timeout=config.timeout_seconds)
 
     raise DiscoveryError(f"Unknown transport: {config.transport}")
 

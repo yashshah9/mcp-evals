@@ -2,7 +2,7 @@
 
 Behavioral evaluation and description linting for [Model Context Protocol](https://modelcontextprotocol.io) (MCP) servers.
 
-> **Status:** v0.2 — stdio discovery, description lint (including live servers), and mock/OpenAI-compatible tool-selection evals. HTTP MCP transport is next.
+> **Status:** v0.3 — stdio + HTTP JSON-RPC discovery, description lint, and mock/OpenAI-compatible tool-selection evals.
 
 ## Problem
 

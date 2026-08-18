@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-08-19
+
+### Added
+- HTTP JSON-RPC MCP discovery (`transport: http` + `mcp_evals.mcp_client.http`)
+- Example HTTP calculator server in `examples/http_server.py`
+
 ## [0.2.0] - 2026-08-19
 
 ### Added
