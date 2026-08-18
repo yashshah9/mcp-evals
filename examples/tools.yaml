@@ -1,0 +1,28 @@
+tools:
+  - name: search_documents
+    description: Search indexed documents by keyword query and return matching snippets.
+    parameters:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Search terms to match against document content.
+        limit:
+          type: integer
+          description: Maximum number of results to return.
+      required: [query]
+  - name: fetch_document
+    description: Retrieve a single document by its unique identifier.
+    parameters:
+      type: object
+      properties:
+        document_id:
+          type: string
+      required: [document_id]
+  - name: get_weather
+    description: ""
+    parameters:
+      type: object
+      properties:
+        city:
+          type: string

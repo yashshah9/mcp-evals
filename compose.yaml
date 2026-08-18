@@ -1,0 +1,32 @@
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: dev
+    volumes:
+      - .:/app
+    env_file:
+      - .env.example
+    working_dir: /app
+    command: ["mcp-evals", "health"]
+
+  test:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: dev
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: ["pytest", "tests/", "-v"]
+
+  lint-example:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: dev
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: ["mcp-evals", "lint", "examples/tools.yaml"]
