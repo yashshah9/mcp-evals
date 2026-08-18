@@ -3,7 +3,7 @@
 | Document | Status | Description |
 |----------|--------|-------------|
 | [v0.1-completed-foundation.md](./v0.1-completed-foundation.md) | **Completed** | What was implemented in the initial foundation release |
-| [v0.2-next-phase-roadmap.md](./v0.2-next-phase-roadmap.md) | **Planned** | Next-phase improvements, milestones, and success criteria |
+| [v0.2-next-phase-roadmap.md](./v0.2-next-phase-roadmap.md) | **In Progress** | v0.2.0 shipped stdio discover + eval runner; HTTP MCP still open |
 
 ## Conventions
 

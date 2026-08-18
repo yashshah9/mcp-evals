@@ -1,0 +1,3 @@
+name: document-catalog
+transport: catalog
+catalog: tools.yaml

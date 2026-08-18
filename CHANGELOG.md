@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-08-19
+
+### Added
+- `mcp-evals discover` for stdio MCP servers and catalog fixtures
+- `mcp-evals lint --live` against a server config
+- Behavioral `mcp-evals run` with mock keyword selector or OpenAI-compatible models
+- `--samples` and `--pass-threshold` for CI
+- Extra linter rules: `required-params-undocumented`, `ambiguous-verbs`
+- Example stdio calculator server and GitHub Action (`action.yml`)
+
+### Notes
+- HTTP/Streamable MCP transport is not implemented yet
+
 ## [0.1.0] - 2026-08-18
 
 ### Added

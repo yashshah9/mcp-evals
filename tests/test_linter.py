@@ -33,6 +33,24 @@ def test_lint_flags_overlapping_descriptions() -> None:
     assert any(i.rule == "overlapping-descriptions" for i in report.issues)
 
 
+def test_lint_flags_required_param_docs() -> None:
+    catalog = ToolCatalog(
+        tools=[
+            ToolDefinition(
+                name="create_issue",
+                description="Create a GitHub issue in the configured repository.",
+                parameters={
+                    "type": "object",
+                    "required": ["title"],
+                    "properties": {"title": {"type": "string"}},
+                },
+            )
+        ]
+    )
+    report = lint_tool_descriptions(catalog)
+    assert any(i.rule == "required-params-undocumented" for i in report.issues)
+
+
 def test_lint_passes_clean_catalog() -> None:
     catalog = ToolCatalog(
         tools=[

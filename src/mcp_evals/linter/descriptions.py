@@ -47,8 +47,10 @@ def lint_tool_descriptions(catalog: ToolCatalog) -> LintReport:
         _check_missing_description(tool, report)
         _check_short_description(tool, report)
         _check_missing_param_docs(tool, report)
+        _check_required_param_docs(tool, report)
 
     _check_overlapping_descriptions(tools, report)
+    _check_ambiguous_verbs(tools, report)
     return report
 
 
@@ -90,6 +92,58 @@ def _check_missing_param_docs(tool: ToolDefinition, report: LintReport) -> None:
                     severity="warning",
                     tool=tool.name,
                     message=f"Parameter '{param_name}' has no description.",
+                )
+            )
+
+
+def _check_required_param_docs(tool: ToolDefinition, report: LintReport) -> None:
+    required = tool.parameters.get("required", [])
+    props = tool.parameters.get("properties", {})
+    if not isinstance(required, list) or not isinstance(props, dict):
+        return
+    for name in required:
+        schema = props.get(name, {})
+        if not isinstance(schema, dict):
+            report.issues.append(
+                LintIssue(
+                    rule="required-params-undocumented",
+                    severity="error",
+                    tool=tool.name,
+                    message=f"Required parameter '{name}' is missing from properties.",
+                )
+            )
+            continue
+        if not str(schema.get("description", "")).strip() or "type" not in schema:
+            report.issues.append(
+                LintIssue(
+                    rule="required-params-undocumented",
+                    severity="error",
+                    tool=tool.name,
+                    message=f"Required parameter '{name}' needs a type and description.",
+                )
+            )
+
+
+def _check_ambiguous_verbs(tools: list[ToolDefinition], report: LintReport) -> None:
+    verbs = ("get", "fetch", "list", "search", "find", "query")
+    buckets: dict[str, list[str]] = {verb: [] for verb in verbs}
+    for tool in tools:
+        blob = f"{tool.name} {tool.description}".lower()
+        for verb in verbs:
+            if verb in blob.split() or tool.name.lower().startswith(verb):
+                buckets[verb].append(tool.name)
+    for verb, names in buckets.items():
+        unique = sorted(set(names))
+        if len(unique) >= 2:
+            report.issues.append(
+                LintIssue(
+                    rule="ambiguous-verbs",
+                    severity="warning",
+                    tool=unique[0],
+                    message=(
+                        f"Tools {unique} share the verb '{verb}'; "
+                        "agents may pick the wrong one."
+                    ),
                 )
             )
 

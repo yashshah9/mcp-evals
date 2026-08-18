@@ -21,9 +21,13 @@ class RunReport:
     suite_name: str
     case_results: list[CaseResult] = field(default_factory=list)
     mode: str = "dry-run"
+    accuracy: float | None = None
+    threshold: float | None = None
 
     @property
     def passed(self) -> bool:
+        if self.accuracy is not None and self.threshold is not None:
+            return self.accuracy >= self.threshold
         return all(r.status in {"pass", "skipped"} for r in self.case_results)
 
 

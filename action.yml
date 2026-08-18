@@ -1,0 +1,34 @@
+name: Run mcp-evals
+description: Lint MCP tool descriptions and run a behavioral eval suite
+inputs:
+  catalog:
+    description: Path to the YAML tool catalog
+    required: true
+  suite:
+    description: Path to the eval suite YAML
+    required: false
+  threshold:
+    description: Minimum selection accuracy
+    required: false
+    default: "0.8"
+  model:
+    description: mock or an OpenAI-compatible model name
+    required: false
+    default: mock
+runs:
+  using: composite
+  steps:
+    - name: Install mcp-evals
+      shell: bash
+      run: pip install "${{ github.action_path }}"
+    - name: Lint
+      shell: bash
+      run: mcp-evals lint "${{ inputs.catalog }}"
+    - name: Run evals
+      if: ${{ inputs.suite != '' }}
+      shell: bash
+      run: >
+        mcp-evals run "${{ inputs.suite }}"
+        --catalog "${{ inputs.catalog }}"
+        --model "${{ inputs.model }}"
+        --pass-threshold "${{ inputs.threshold }}"

@@ -11,3 +11,11 @@ class SpecValidationError(McpEvalsError):
 
 class LintError(McpEvalsError):
     """Description linting found blocking issues."""
+
+
+class DiscoveryError(McpEvalsError):
+    """Failed to discover tools from an MCP server."""
+
+
+class EvalRunError(McpEvalsError):
+    """Behavioral eval run failed."""

@@ -2,7 +2,7 @@
 
 Behavioral evaluation and description linting for [Model Context Protocol](https://modelcontextprotocol.io) (MCP) servers.
 
-> **Status:** v0.1 foundation — description linter and eval spec validation work today; LLM-based tool-selection benchmarking is the next milestone.
+> **Status:** v0.2 — stdio discovery, description lint (including live servers), and mock/OpenAI-compatible tool-selection evals. HTTP MCP transport is next.
 
 ## Problem
 
@@ -10,12 +10,12 @@ Protocol conformance tests verify JSON-RPC correctness. They do **not** verify w
 
 **mcp-evals** fills the behavioral layer: lint tool descriptions, define eval cases in YAML, and (next) measure tool-selection accuracy in CI.
 
-## Key features (v0.1)
+## Key features (v0.2)
 
-- **Description linter** — flags missing descriptions, undocumented parameters, and overlapping tool descriptions
-- **Eval spec validation** — validates YAML eval suites (structure, duplicate IDs, required fields)
-- **CLI + Docker** — run locally or in CI without a live MCP server (use fixture catalogs)
-- **Extensible architecture** — ready for MCP client discovery and LLM eval runner
+- **Description linter** — missing descriptions, undocumented required params, overlapping tools, ambiguous verbs
+- **Live discover** — handshake a stdio MCP server (or load a catalog fixture)
+- **Eval runner** — `mcp-evals run` with `--model mock` (CI) or an OpenAI-compatible endpoint
+- **CLI + Docker + GitHub Action** — lint and optional eval in CI without a cloud key (mock selector)
 
 ## Architecture
 
@@ -52,7 +52,10 @@ python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 mcp-evals health
 mcp-evals lint examples/tools.yaml
+mcp-evals discover examples/server.yaml
+mcp-evals lint --live examples/server.yaml
 mcp-evals validate-spec examples/eval-suite.yaml
+mcp-evals run examples/eval-suite.yaml --catalog examples/tools.yaml --model mock
 pytest tests/ -v
 ```
 
@@ -86,8 +89,18 @@ Copy `.env.example` to `.env`:
 
 ```bash
 mcp-evals lint examples/tools.yaml
+mcp-evals lint --live examples/server.yaml
+mcp-evals discover examples/server.yaml
 mcp-evals lint examples/tools.yaml --format json
 mcp-evals lint examples/tools.yaml --fail-on-warning
+```
+
+### Run behavioral evals
+
+```bash
+mcp-evals run examples/eval-suite.yaml --catalog examples/tools.yaml --model mock
+mcp-evals run examples/eval-suite.yaml --catalog examples/tools.yaml \
+  --model llama3.2 --base-url http://localhost:11434/v1 --pass-threshold 0.8
 ```
 
 ### Validate eval suite
@@ -134,10 +147,16 @@ mypy src
 
 ## Roadmap
 
-- [ ] MCP client: connect to stdio/HTTP servers and discover tools live
-- [ ] LLM eval runner: tool-selection accuracy with configurable models
-- [ ] GitHub Action with PR comments and pass thresholds
-- [ ] Description linter rules: ambiguous verbs, missing examples
+- [x] MCP client: stdio discover + lint --live
+- [x] LLM eval runner (mock + OpenAI-compatible)
+- [ ] HTTP/Streamable MCP transport
+- [ ] GitHub Action PR comments and accuracy deltas
+
+## Known limitations (v0.2)
+
+- HTTP MCP transport is not implemented — use stdio or a catalog fixture
+- Mock selector does not fill tool arguments (accuracy is tool-name only)
+- Live Ollama/OpenAI evals need a reachable `--base-url`; CI uses `--model mock`
 
 ## Contributing
 
@@ -146,10 +165,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
-## Known limitations (v0.1)
-
-- No live MCP server connection yet — use YAML tool catalog fixtures
-- No LLM calls — `validate-spec` is structure-only dry-run
-- Tools endpoint only — resources and prompts not supported
-- Single-turn eval cases only
