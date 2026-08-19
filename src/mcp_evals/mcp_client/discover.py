@@ -18,11 +18,14 @@ def load_server_config(path: Path) -> ServerConfig:
     raw = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise DiscoveryError("Server config must be a YAML mapping.")
-    return ServerConfig.model_validate(raw)
+    try:
+        return ServerConfig.model_validate(raw)
+    except Exception as exc:
+        raise DiscoveryError(f"Invalid server config: {exc}") from exc
 
 
 def discover_tools(config: ServerConfig, base_dir: Path | None = None) -> ToolCatalog:
-    """Load tools via catalog fixture, stdio MCP, or HTTP (not yet)."""
+    """Load tools via catalog fixture, stdio MCP, or HTTP JSON-RPC."""
     root = base_dir or Path.cwd()
     if config.transport == "catalog":
         if not config.catalog:

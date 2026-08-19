@@ -7,6 +7,7 @@ import os
 import subprocess
 from typing import Any
 
+from mcp_evals import __version__
 from mcp_evals.errors import DiscoveryError
 from mcp_evals.models.spec import ToolCatalog, ToolDefinition
 
@@ -42,7 +43,10 @@ def _read_message(proc: subprocess.Popen[str]) -> dict[str, Any]:
     if length <= 0:
         raise DiscoveryError("MCP server sent a message without Content-Length.")
     body = proc.stdout.read(length)
-    return json.loads(body)
+    parsed = json.loads(body)
+    if not isinstance(parsed, dict):
+        raise DiscoveryError("MCP server returned a non-object JSON message.")
+    return parsed
 
 
 def _to_tool(raw: dict[str, Any]) -> ToolDefinition:
@@ -86,7 +90,7 @@ def discover_stdio(
                 {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {},
-                    "clientInfo": {"name": "mcp-evals", "version": "0.2.0"},
+                    "clientInfo": {"name": "mcp-evals", "version": __version__},
                 },
                 1,
             ),

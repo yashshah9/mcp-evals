@@ -158,26 +158,34 @@ def validate_spec_cmd(suite: Path, fmt: str) -> None:
 
 @main.command("run")
 @click.argument("suite", type=click.Path(exists=True, path_type=Path))
-@click.option("--catalog", type=click.Path(exists=True, path_type=Path), required=True)
+@click.option("--catalog", type=click.Path(exists=True, path_type=Path))
+@click.option("--live", "server_config", type=click.Path(exists=True, path_type=Path))
 @click.option("--model", default="mock", help="mock | openai-compatible model name")
 @click.option("--base-url", default=None, help="OpenAI-compatible base URL (Ollama: http://localhost:11434/v1)")
-@click.option("--samples", default=1, type=int)
+@click.option("--samples", default=1, type=click.IntRange(1, 100))
 @click.option("--pass-threshold", "threshold", default=None, type=float)
 @click.option("--format", "fmt", type=click.Choice(["text", "json"]), default="text")
 def run_cmd(
     suite: Path,
-    catalog: Path,
+    catalog: Path | None,
+    server_config: Path | None,
     model: str,
     base_url: str | None,
     samples: int,
     threshold: float | None,
     fmt: str,
 ) -> None:
-    """Run behavioral evals against a tool catalog."""
+    """Run behavioral evals against a tool catalog or a live MCP server."""
     settings = get_settings()
     try:
         eval_suite = load_eval_suite(suite)
-        tool_catalog = load_tool_catalog(catalog)
+        if server_config:
+            config = load_server_config(server_config)
+            tool_catalog = discover_tools(config, base_dir=server_config.parent)
+        elif catalog:
+            tool_catalog = load_tool_catalog(catalog)
+        else:
+            raise click.UsageError("Provide --catalog FILE or --live SERVER.yaml")
         if model == "mock":
             selector: KeywordSelector | OpenAICompatibleSelector = KeywordSelector()
         else:
@@ -218,11 +226,18 @@ def run_cmd(
             color = "green" if result.status == "pass" else "red"
             table.add_row(result.case_id, f"[{color}]{result.status}[/{color}]", result.message)
         console.print(table)
-        console.print(
-            f"accuracy={metrics.selection_accuracy:.0%} "
-            f"args={metrics.argument_validity:.0%} "
-            f"threshold={report.threshold:.0%}"
-        )
+        if model == "mock":
+            console.print(
+                f"accuracy={metrics.selection_accuracy:.0%} "
+                f"threshold={report.threshold:.0%} "
+                "(mock selector scores tool names only)"
+            )
+        else:
+            console.print(
+                f"accuracy={metrics.selection_accuracy:.0%} "
+                f"args={metrics.argument_validity:.0%} "
+                f"threshold={report.threshold:.0%}"
+            )
     if not report.passed:
         sys.exit(1)
 

@@ -8,7 +8,6 @@ from mcp_evals.errors import SpecValidationError
 from mcp_evals.runner.eval_runner import validate_suite_structure
 from mcp_evals.spec_loader import load_eval_suite, load_tool_catalog
 
-
 EXAMPLES = Path(__file__).parent.parent / "examples"
 
 

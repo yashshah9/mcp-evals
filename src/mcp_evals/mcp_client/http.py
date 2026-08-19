@@ -7,6 +7,7 @@ import urllib.error
 import urllib.request
 from typing import Any
 
+from mcp_evals import __version__
 from mcp_evals.errors import DiscoveryError
 from mcp_evals.mcp_client.stdio import _to_tool
 from mcp_evals.models.spec import ToolCatalog
@@ -35,6 +36,8 @@ def discover_http(url: str, timeout: float = 8.0) -> ToolCatalog:
             raise DiscoveryError(f"HTTP MCP request failed: {exc}") from exc
         except json.JSONDecodeError as exc:
             raise DiscoveryError(f"HTTP MCP returned invalid JSON: {exc}") from exc
+        if not isinstance(body, dict):
+            raise DiscoveryError(f"{method} returned a non-object JSON message.")
         if "error" in body:
             raise DiscoveryError(f"{method} failed: {body['error']}")
         return body
@@ -44,7 +47,7 @@ def discover_http(url: str, timeout: float = 8.0) -> ToolCatalog:
         {
             "protocolVersion": "2024-11-05",
             "capabilities": {},
-            "clientInfo": {"name": "mcp-evals", "version": "0.3.0"},
+            "clientInfo": {"name": "mcp-evals", "version": __version__},
         },
         1,
     )

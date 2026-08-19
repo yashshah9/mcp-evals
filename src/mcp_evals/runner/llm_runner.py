@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Protocol
 
 import structlog
 
@@ -31,7 +31,8 @@ class KeywordSelector:
         best = tools[0]
         best_score = -1
         for tool in tools:
-            tokens = {w.lower() for w in f"{tool.name} {tool.description}".replace("_", " ").split()}
+            blob = f"{tool.name} {tool.description}".replace("_", " ")
+            tokens = {w.lower() for w in blob.split()}
             score = len(request_tokens & tokens)
             if score > best_score:
                 best = tool
@@ -129,6 +130,7 @@ def run_eval_suite(
     results: list[CaseResult] = []
     passed_cases = 0
     arg_ok = 0
+    arg_scored = 0
     latency_total = 0
     n = max(1, samples)
 
@@ -146,11 +148,13 @@ def run_eval_suite(
                 hits += 1
         latency_total += case_latency
         selected = hits * 2 >= n
-        args_match = _args_valid(case.expected_tool.arguments, last_args)
         if selected:
             passed_cases += 1
-        if args_match:
-            arg_ok += 1
+        # Skip arg scoring when the selector did not attempt arguments (mock).
+        if last_args or not case.expected_tool.arguments:
+            arg_scored += 1
+            if _args_valid(case.expected_tool.arguments, last_args):
+                arg_ok += 1
         status = "pass" if selected else "fail"
         message = (
             f"expected={case.expected_tool.name} actual={last_tool} "
@@ -172,7 +176,7 @@ def run_eval_suite(
     total = max(1, len(suite.cases))
     metrics = EvalMetrics(
         selection_accuracy=passed_cases / total,
-        argument_validity=arg_ok / total,
+        argument_validity=(arg_ok / arg_scored) if arg_scored else 1.0,
         cases=len(suite.cases),
         samples=n,
         latency_ms_total=latency_total,

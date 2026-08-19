@@ -29,4 +29,33 @@ services:
     volumes:
       - .:/app
     working_dir: /app
-    command: ["mcp-evals", "lint", "examples/tools.yaml"]
+    command: ["mcp-evals", "lint", "--live", "examples/server.yaml"]
+
+  discover-example:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: dev
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: ["mcp-evals", "discover", "examples/server.yaml"]
+
+  run-example:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: dev
+    volumes:
+      - .:/app
+    working_dir: /app
+    command:
+      [
+        "mcp-evals",
+        "run",
+        "examples/eval-suite.yaml",
+        "--catalog",
+        "examples/tools.yaml",
+        "--model",
+        "mock",
+      ]

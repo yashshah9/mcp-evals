@@ -43,9 +43,9 @@ mcp = ["mcp>=1.0"]
 mcp-evals = "mcp_evals.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/example/mcp-evals"
-Documentation = "https://github.com/example/mcp-evals#readme"
-Issues = "https://github.com/example/mcp-evals/issues"
+Homepage = "https://github.com/yashshah9/mcp-evals"
+Documentation = "https://github.com/yashshah9/mcp-evals#readme"
+Issues = "https://github.com/yashshah9/mcp-evals/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mcp_evals"]

@@ -1,6 +1,6 @@
 """Tests for discovery and behavioral eval runner."""
 
-import sys
+import importlib.util
 import threading
 from http.server import ThreadingHTTPServer
 from pathlib import Path
@@ -53,8 +53,11 @@ def test_keyword_selector_picks_expected_tool() -> None:
 
 
 def test_discover_http_calc_server() -> None:
-    sys.path.insert(0, str(EXAMPLES))
-    from http_server import Handler  # type: ignore[import-not-found]
+    spec = importlib.util.spec_from_file_location("http_server", EXAMPLES / "http_server.py")
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    Handler = module.Handler
 
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)

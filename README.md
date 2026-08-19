@@ -10,11 +10,11 @@ Protocol conformance tests verify JSON-RPC correctness. They do **not** verify w
 
 **mcp-evals** fills the behavioral layer: lint tool descriptions, define eval cases in YAML, and (next) measure tool-selection accuracy in CI.
 
-## Key features (v0.2)
+## Key features (v0.3)
 
 - **Description linter** — missing descriptions, undocumented required params, overlapping tools, ambiguous verbs
-- **Live discover** — handshake a stdio MCP server (or load a catalog fixture)
-- **Eval runner** — `mcp-evals run` with `--model mock` (CI) or an OpenAI-compatible endpoint
+- **Live discover** — handshake a stdio or HTTP JSON-RPC MCP server (or load a catalog fixture)
+- **Eval runner** — `mcp-evals run` with `--model mock` (CI), `--live SERVER.yaml`, or an OpenAI-compatible endpoint
 - **CLI + Docker + GitHub Action** — lint and optional eval in CI without a cloud key (mock selector)
 
 ## Architecture
@@ -68,8 +68,14 @@ docker compose run --rm dev
 # Run tests
 docker compose run --rm test
 
-# Lint example catalog
+# Lint a live stdio server (this example passes)
 docker compose run --rm lint-example
+
+# Discover tools from the example calc server
+docker compose run --rm discover-example
+
+# Mock eval run (no API key)
+docker compose run --rm run-example
 ```
 
 ## Configuration
@@ -101,6 +107,8 @@ mcp-evals lint examples/tools.yaml --fail-on-warning
 mcp-evals run examples/eval-suite.yaml --catalog examples/tools.yaml --model mock
 mcp-evals run examples/eval-suite.yaml --catalog examples/tools.yaml \
   --model llama3.2 --base-url http://localhost:11434/v1 --pass-threshold 0.8
+# or discover tools from a live server that matches the suite:
+# mcp-evals run suite.yaml --live server.yaml --model mock
 ```
 
 ### Validate eval suite
@@ -149,14 +157,16 @@ mypy src
 
 - [x] MCP client: stdio discover + lint --live
 - [x] LLM eval runner (mock + OpenAI-compatible)
-- [ ] HTTP/Streamable MCP transport
+- [x] HTTP JSON-RPC MCP transport
+- [ ] Streamable HTTP/SSE MCP transport
 - [ ] GitHub Action PR comments and accuracy deltas
 
-## Known limitations (v0.2)
+## Known limitations (v0.3)
 
-- HTTP MCP transport is not implemented — use stdio or a catalog fixture
+- Streamable HTTP/SSE MCP is not implemented — HTTP is JSON-RPC POST only
 - Mock selector does not fill tool arguments (accuracy is tool-name only)
 - Live Ollama/OpenAI evals need a reachable `--base-url`; CI uses `--model mock`
+- `examples/tools.yaml` is intentionally dirty so `mcp-evals lint` can show findings
 
 ## Contributing
 
