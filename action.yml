@@ -15,6 +15,10 @@ inputs:
     description: mock or an OpenAI-compatible model name
     required: false
     default: mock
+  comment:
+    description: Post or update a PR comment with eval results (pull_request only)
+    required: false
+    default: "true"
 runs:
   using: composite
   steps:
@@ -25,10 +29,93 @@ runs:
       shell: bash
       run: mcp-evals lint "${{ inputs.catalog }}"
     - name: Run evals
+      id: evals
       if: ${{ inputs.suite != '' }}
       shell: bash
-      run: >
-        mcp-evals run "${{ inputs.suite }}"
-        --catalog "${{ inputs.catalog }}"
-        --model "${{ inputs.model }}"
-        --pass-threshold "${{ inputs.threshold }}"
+      run: |
+        RESULTS_FILE="${RUNNER_TEMP}/mcp-evals-results.json"
+        set +e
+        NO_COLOR=1 mcp-evals run "${{ inputs.suite }}" \
+          --catalog "${{ inputs.catalog }}" \
+          --model "${{ inputs.model }}" \
+          --pass-threshold "${{ inputs.threshold }}" \
+          --format json > "$RESULTS_FILE"
+        EXIT=$?
+        set -e
+        echo "results_file=$RESULTS_FILE" >> "$GITHUB_OUTPUT"
+        echo "exit_code=$EXIT" >> "$GITHUB_OUTPUT"
+    - name: Report eval results
+      if: ${{ inputs.suite != '' }}
+      uses: actions/github-script@v7
+      env:
+        RESULTS_FILE: ${{ steps.evals.outputs.results_file }}
+        COMMENT: ${{ inputs.comment }}
+      with:
+        script: |
+          const fs = require('fs');
+          const path = process.env.RESULTS_FILE;
+          if (!path || !fs.existsSync(path)) {
+            core.warning('No mcp-evals results file; skipping report');
+            return;
+          }
+          const raw = fs.readFileSync(path, 'utf8').trim();
+          if (!raw) {
+            core.warning('mcp-evals results file is empty; skipping report');
+            return;
+          }
+          let results;
+          try {
+            results = JSON.parse(raw);
+          } catch (err) {
+            core.warning(`Could not parse mcp-evals JSON: ${err.message}`);
+            return;
+          }
+          const accuracyPct = Math.round((results.accuracy ?? 0) * 100);
+          const status = results.passed ? 'pass' : 'fail';
+          const escape = (s) => String(s ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
+          let md = '<!-- mcp-evals-report -->\n';
+          md += '## mcp-evals\n\n';
+          md += `**Accuracy:** ${accuracyPct}% · **Status:** ${status}`;
+          if (results.suite) {
+            md += ` · **Suite:** ${escape(results.suite)}`;
+          }
+          md += '\n\n';
+          md += '| Case | Status | Detail |\n';
+          md += '|------|--------|--------|\n';
+          for (const c of results.cases || []) {
+            md += `| ${escape(c.case_id)} | ${escape(c.status)} | ${escape(c.message)} |\n`;
+          }
+
+          const isPR = context.eventName === 'pull_request';
+          const wantComment = process.env.COMMENT === 'true';
+
+          if (isPR && wantComment) {
+            const marker = '<!-- mcp-evals-report -->';
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find((c) => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: md,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: md,
+              });
+            }
+          } else {
+            await core.summary.addRaw(md).write();
+          }
+    - name: Fail if evals below threshold
+      if: ${{ inputs.suite != '' && steps.evals.outputs.exit_code != '0' }}
+      shell: bash
+      run: exit "${{ steps.evals.outputs.exit_code }}"

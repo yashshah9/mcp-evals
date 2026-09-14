@@ -7,7 +7,7 @@ Behavioral evaluation and description linting for [Model Context Protocol](https
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![CI](https://github.com/yashshah9/mcp-evals/actions/workflows/ci.yml/badge.svg)](https://github.com/yashshah9/mcp-evals/actions/workflows/ci.yml)
 
-> **Status:** v0.5 — stdio + HTTP JSON-RPC discovery, description lint (including `name-description-mismatch` + `missing-examples`), and mock/OpenAI-compatible tool-selection evals.
+> **Status:** v0.6 — stdio + HTTP JSON-RPC discovery, description lint (including `name-description-mismatch` + `missing-examples`), mock/OpenAI-compatible tool-selection evals, and GitHub Action PR comments.
 
 ## 60-second try
 
@@ -34,12 +34,12 @@ Protocol conformance tests verify JSON-RPC correctness. They do **not** verify w
 
 **mcp-evals** fills the behavioral layer: lint tool descriptions, define eval cases in YAML, and (next) measure tool-selection accuracy in CI.
 
-## Key features (v0.5)
+## Key features (v0.6)
 
 - **Description linter** — missing descriptions, undocumented required params, overlapping tools, ambiguous verbs, `name-description-mismatch`, `missing-examples`
 - **Live discover** — handshake a stdio or HTTP JSON-RPC MCP server (or load a catalog fixture)
 - **Eval runner** — `mcp-evals run` with `--model mock` (CI), `--live SERVER.yaml`, or an OpenAI-compatible endpoint
-- **CLI + Docker + GitHub Action** — lint and optional eval in CI without a cloud key (mock selector)
+- **CLI + Docker + GitHub Action** — lint and optional eval in CI without a cloud key (mock selector); PR comment or job summary with accuracy
 
 ## Architecture
 
@@ -147,6 +147,25 @@ mcp-evals validate-spec examples/eval-suite.yaml
 mcp-evals health
 ```
 
+### GitHub Action
+
+On `pull_request`, the composite action posts (or updates) a comment with selection accuracy and a per-case table. On other events it writes the same markdown to `$GITHUB_STEP_SUMMARY`. Set `comment: false` to skip PR comments.
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+steps:
+  - uses: actions/checkout@v4
+  - uses: yashshah9/mcp-evals@v0.6
+    with:
+      catalog: examples/tools.yaml
+      suite: examples/eval-suite.yaml
+      model: mock
+      threshold: "0.8"
+      # comment: false  # optional; default true
+```
+
 ## Example eval suite
 
 See `examples/eval-suite.yaml`:
@@ -184,7 +203,7 @@ mypy src
 - [x] HTTP JSON-RPC MCP transport
 - [x] `name-description-mismatch` linter rule
 - [ ] Streamable HTTP/SSE MCP transport
-- [ ] GitHub Action PR comments and accuracy deltas
+- [x] GitHub Action PR comments (accuracy + per-case table; deltas later)
 
 ## Known limitations (v0.4)
 
