@@ -2,6 +2,7 @@
 
 Behavioral evaluation and description linting for [Model Context Protocol](https://modelcontextprotocol.io) (MCP) servers.
 
+[![PyPI](https://img.shields.io/pypi/v/mcp-tool-evals.svg)](https://pypi.org/project/mcp-tool-evals/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![CI](https://github.com/yashshah9/mcp-evals/actions/workflows/ci.yml/badge.svg)](https://github.com/yashshah9/mcp-evals/actions/workflows/ci.yml)
@@ -11,9 +12,11 @@ Behavioral evaluation and description linting for [Model Context Protocol](https
 ## 60-second try
 
 ```bash
-docker compose run --rm run-example   # mock eval, no API key
-docker compose run --rm lint-example  # live stdio lint
-docker compose run --rm test          # pytest
+pip install mcp-tool-evals
+mcp-evals health
+mcp-evals run examples/eval-suite.yaml --catalog examples/tools.yaml --model mock
+# or with Docker (no local Python):
+docker compose run --rm run-example
 ```
 
 ## Why this vs alternatives
@@ -31,9 +34,9 @@ Protocol conformance tests verify JSON-RPC correctness. They do **not** verify w
 
 **mcp-evals** fills the behavioral layer: lint tool descriptions, define eval cases in YAML, and (next) measure tool-selection accuracy in CI.
 
-## Key features (v0.4)
+## Key features (v0.5)
 
-- **Description linter** — missing descriptions, undocumented required params, overlapping tools, ambiguous verbs, `name-description-mismatch`
+- **Description linter** — missing descriptions, undocumented required params, overlapping tools, ambiguous verbs, `name-description-mismatch`, `missing-examples`
 - **Live discover** — handshake a stdio or HTTP JSON-RPC MCP server (or load a catalog fixture)
 - **Eval runner** — `mcp-evals run` with `--model mock` (CI), `--live SERVER.yaml`, or an OpenAI-compatible endpoint
 - **CLI + Docker + GitHub Action** — lint and optional eval in CI without a cloud key (mock selector)
