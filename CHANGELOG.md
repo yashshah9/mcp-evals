@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-09-14
+
+### Added
+- `name-description-mismatch` linter rule — warns when distinctive tool-name tokens never appear in the description
+
 ## [0.3.0] - 2026-08-19
 
 ### Added

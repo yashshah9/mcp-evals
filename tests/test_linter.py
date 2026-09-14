@@ -67,3 +67,16 @@ def test_lint_passes_clean_catalog() -> None:
     )
     report = lint_tool_descriptions(catalog)
     assert report.passed
+
+
+def test_lint_flags_name_description_mismatch() -> None:
+    catalog = ToolCatalog(
+        tools=[
+            ToolDefinition(
+                name="search_documents",
+                description="Return weather for a city by name.",
+            )
+        ]
+    )
+    report = lint_tool_descriptions(catalog)
+    assert any(i.rule == "name-description-mismatch" for i in report.issues)

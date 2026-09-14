@@ -2,7 +2,28 @@
 
 Behavioral evaluation and description linting for [Model Context Protocol](https://modelcontextprotocol.io) (MCP) servers.
 
-> **Status:** v0.3 — stdio + HTTP JSON-RPC discovery, description lint, and mock/OpenAI-compatible tool-selection evals.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![CI](https://github.com/yashshah9/mcp-evals/actions/workflows/ci.yml/badge.svg)](https://github.com/yashshah9/mcp-evals/actions/workflows/ci.yml)
+
+> **Status:** v0.4 — stdio + HTTP JSON-RPC discovery, description lint (including `name-description-mismatch`), and mock/OpenAI-compatible tool-selection evals.
+
+## 60-second try
+
+```bash
+docker compose run --rm run-example   # mock eval, no API key
+docker compose run --rm lint-example  # live stdio lint
+docker compose run --rm test          # pytest
+```
+
+## Why this vs alternatives
+
+| Approach | Strength | Gap |
+|----------|----------|-----|
+| **mcp-evals** | Lint + YAML evals + mock CI runner | Not a full agent harness |
+| MCP Inspector | Interactive debugging | No CI lint/eval suite |
+| Protocol conformance tests | JSON-RPC correctness | Do not test tool selection |
+| Hand-written LLM mocks | Full control | Drift from real descriptions |
 
 ## Problem
 
@@ -10,9 +31,9 @@ Protocol conformance tests verify JSON-RPC correctness. They do **not** verify w
 
 **mcp-evals** fills the behavioral layer: lint tool descriptions, define eval cases in YAML, and (next) measure tool-selection accuracy in CI.
 
-## Key features (v0.3)
+## Key features (v0.4)
 
-- **Description linter** — missing descriptions, undocumented required params, overlapping tools, ambiguous verbs
+- **Description linter** — missing descriptions, undocumented required params, overlapping tools, ambiguous verbs, `name-description-mismatch`
 - **Live discover** — handshake a stdio or HTTP JSON-RPC MCP server (or load a catalog fixture)
 - **Eval runner** — `mcp-evals run` with `--model mock` (CI), `--live SERVER.yaml`, or an OpenAI-compatible endpoint
 - **CLI + Docker + GitHub Action** — lint and optional eval in CI without a cloud key (mock selector)
@@ -158,10 +179,11 @@ mypy src
 - [x] MCP client: stdio discover + lint --live
 - [x] LLM eval runner (mock + OpenAI-compatible)
 - [x] HTTP JSON-RPC MCP transport
+- [x] `name-description-mismatch` linter rule
 - [ ] Streamable HTTP/SSE MCP transport
 - [ ] GitHub Action PR comments and accuracy deltas
 
-## Known limitations (v0.3)
+## Known limitations (v0.4)
 
 - Streamable HTTP/SSE MCP is not implemented — HTTP is JSON-RPC POST only
 - Mock selector does not fill tool arguments (accuracy is tool-name only)

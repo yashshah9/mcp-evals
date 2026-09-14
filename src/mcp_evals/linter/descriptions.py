@@ -48,10 +48,40 @@ def lint_tool_descriptions(catalog: ToolCatalog) -> LintReport:
         _check_short_description(tool, report)
         _check_missing_param_docs(tool, report)
         _check_required_param_docs(tool, report)
+        _check_name_description_mismatch(tool, report)
 
     _check_overlapping_descriptions(tools, report)
     _check_ambiguous_verbs(tools, report)
     return report
+
+
+def _name_tokens(name: str) -> set[str]:
+    parts = name.replace("-", "_").split("_")
+    return {p.lower() for p in parts if len(p) > 2}
+
+
+def _check_name_description_mismatch(tool: ToolDefinition, report: LintReport) -> None:
+    """Warn when distinctive name tokens never appear in the description."""
+    if not tool.description.strip():
+        return
+    name_toks = _name_tokens(tool.name)
+    if not name_toks:
+        return
+    desc_toks = _tokenize(tool.description)
+    missing = sorted(name_toks - desc_toks)
+    # Require at least half of distinctive name tokens to appear in the description.
+    if len(missing) * 2 > len(name_toks):
+        report.issues.append(
+            LintIssue(
+                rule="name-description-mismatch",
+                severity="warning",
+                tool=tool.name,
+                message=(
+                    f"Tool name tokens {missing} never appear in the description; "
+                    "agents may not map the request to this tool."
+                ),
+            )
+        )
 
 
 def _check_missing_description(tool: ToolDefinition, report: LintReport) -> None:

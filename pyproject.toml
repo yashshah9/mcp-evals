@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mcp-evals"
-version = "0.3.0"
+version = "0.4.0"
 description = "Behavioral evaluation and description linting for MCP servers"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
-authors = [{ name = "mcp-evals contributors" }]
+authors = [{ name = "Yash Shah", email = "yash376351@gmail.com" }]
 keywords = ["mcp", "model-context-protocol", "testing", "llm", "agents"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -44,8 +44,9 @@ mcp-evals = "mcp_evals.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/yashshah9/mcp-evals"
-Documentation = "https://github.com/yashshah9/mcp-evals#readme"
+Repository = "https://github.com/yashshah9/mcp-evals"
 Issues = "https://github.com/yashshah9/mcp-evals/issues"
+Documentation = "https://github.com/yashshah9/mcp-evals#readme"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mcp_evals"]
