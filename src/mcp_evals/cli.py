@@ -108,7 +108,7 @@ def lint_cmd(
 @click.argument("server_config", type=click.Path(exists=True, path_type=Path))
 @click.option("--format", "fmt", type=click.Choice(["text", "json"]), default="text")
 def discover_cmd(server_config: Path, fmt: str) -> None:
-    """List tools from an MCP server config (stdio, http, or catalog fixture)."""
+    """List tools from an MCP server config (stdio, http, sse, or catalog fixture)."""
     try:
         config = load_server_config(server_config)
         catalog = discover_tools(config, base_dir=server_config.parent)

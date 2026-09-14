@@ -9,7 +9,7 @@ class ServerConfig(BaseModel):
     name: str = "mcp-server"
     transport: str = Field(
         default="stdio",
-        description="stdio | http | catalog",
+        description="stdio | http | sse | streamable-http | catalog",
     )
     command: str | None = None
     args: list[str] = Field(default_factory=list)

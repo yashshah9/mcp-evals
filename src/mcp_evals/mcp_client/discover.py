@@ -6,10 +6,13 @@ import yaml
 
 from mcp_evals.errors import DiscoveryError, SpecValidationError
 from mcp_evals.mcp_client.http import discover_http
+from mcp_evals.mcp_client.sse import discover_sse
 from mcp_evals.mcp_client.stdio import discover_stdio
 from mcp_evals.models.server import ServerConfig
 from mcp_evals.models.spec import ToolCatalog
 from mcp_evals.spec_loader import load_tool_catalog
+
+_SSE_TRANSPORTS = frozenset({"sse", "streamable-http"})
 
 
 def load_server_config(path: Path) -> ServerConfig:
@@ -25,7 +28,7 @@ def load_server_config(path: Path) -> ServerConfig:
 
 
 def discover_tools(config: ServerConfig, base_dir: Path | None = None) -> ToolCatalog:
-    """Load tools via catalog fixture, stdio MCP, or HTTP JSON-RPC."""
+    """Load tools via catalog fixture, stdio, HTTP JSON-RPC, or Streamable HTTP/SSE."""
     root = base_dir or Path.cwd()
     if config.transport == "catalog":
         if not config.catalog:
@@ -52,6 +55,11 @@ def discover_tools(config: ServerConfig, base_dir: Path | None = None) -> ToolCa
         if not config.url:
             raise DiscoveryError("http transport requires 'url'.")
         return discover_http(config.url, timeout=config.timeout_seconds)
+
+    if config.transport in _SSE_TRANSPORTS:
+        if not config.url:
+            raise DiscoveryError(f"{config.transport} transport requires 'url'.")
+        return discover_sse(config.url, timeout=config.timeout_seconds)
 
     raise DiscoveryError(f"Unknown transport: {config.transport}")
 

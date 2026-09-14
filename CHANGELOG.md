@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2026-09-14
+
+### Added
+- Streamable HTTP / SSE MCP discovery (`transport: sse` or `streamable-http`)
+- `mcp_evals.mcp_client.sse.discover_sse` — POST JSON-RPC with `Accept: application/json, text/event-stream`, parse SSE `data:` events, echo `Mcp-Session-Id`
+- Example server config `examples/sse-server.yaml`
+- Unit tests with mocked httpx SSE framing (`tests/test_sse_client.py`)
+
 ## [0.6.0] - 2026-09-14
 
 ### Added
@@ -35,7 +43,7 @@ All notable changes to this project will be documented in this file.
 - Example stdio calculator server and GitHub Action (`action.yml`)
 
 ### Notes
-- HTTP/Streamable MCP transport is not implemented yet
+- Streamable HTTP/SSE shipped in 0.7.0
 
 ## [0.1.0] - 2026-08-18
 
