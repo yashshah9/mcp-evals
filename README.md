@@ -61,7 +61,7 @@ Protocol conformance tests verify JSON-RPC correctness. They do **not** verify w
 ## Installation
 
 ```bash
-pip install mcp-evals
+pip install mcp-tool-evals
 # or from source:
 pip install -e ".[dev]"
 ```
