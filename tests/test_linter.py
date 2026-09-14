@@ -80,3 +80,43 @@ def test_lint_flags_name_description_mismatch() -> None:
     )
     report = lint_tool_descriptions(catalog)
     assert any(i.rule == "name-description-mismatch" for i in report.issues)
+
+
+def test_lint_flags_missing_examples() -> None:
+    catalog = ToolCatalog(
+        tools=[
+            ToolDefinition(
+                name="create_issue",
+                description="Create a new GitHub issue in the configured repository.",
+                parameters={
+                    "properties": {
+                        "title": {"type": "string", "description": "Issue title"},
+                    }
+                },
+            )
+        ]
+    )
+    report = lint_tool_descriptions(catalog)
+    assert any(i.rule == "missing-examples" for i in report.issues)
+
+
+def test_lint_passes_with_examples() -> None:
+    catalog = ToolCatalog(
+        tools=[
+            ToolDefinition(
+                name="create_issue",
+                description="Create a new GitHub issue in the configured repository.",
+                parameters={
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "description": "Issue title",
+                            "examples": ["Bug in login"],
+                        },
+                    }
+                },
+            )
+        ]
+    )
+    report = lint_tool_descriptions(catalog)
+    assert not any(i.rule == "missing-examples" for i in report.issues)

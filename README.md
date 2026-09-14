@@ -6,7 +6,7 @@ Behavioral evaluation and description linting for [Model Context Protocol](https
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![CI](https://github.com/yashshah9/mcp-evals/actions/workflows/ci.yml/badge.svg)](https://github.com/yashshah9/mcp-evals/actions/workflows/ci.yml)
 
-> **Status:** v0.4 — stdio + HTTP JSON-RPC discovery, description lint (including `name-description-mismatch`), and mock/OpenAI-compatible tool-selection evals.
+> **Status:** v0.5 — stdio + HTTP JSON-RPC discovery, description lint (including `name-description-mismatch` + `missing-examples`), and mock/OpenAI-compatible tool-selection evals.
 
 ## 60-second try
 

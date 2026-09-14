@@ -10,7 +10,7 @@ class LintIssue:
     """A single lint finding."""
 
     rule: str
-    severity: str  # error | warning
+    severity: str  # error | warning | info
     tool: str
     message: str
 
@@ -49,6 +49,7 @@ def lint_tool_descriptions(catalog: ToolCatalog) -> LintReport:
         _check_missing_param_docs(tool, report)
         _check_required_param_docs(tool, report)
         _check_name_description_mismatch(tool, report)
+        _check_missing_examples(tool, report)
 
     _check_overlapping_descriptions(tools, report)
     _check_ambiguous_verbs(tools, report)
@@ -58,6 +59,33 @@ def lint_tool_descriptions(catalog: ToolCatalog) -> LintReport:
 def _name_tokens(name: str) -> set[str]:
     parts = name.replace("-", "_").split("_")
     return {p.lower() for p in parts if len(p) > 2}
+
+
+def _has_example(schema: dict) -> bool:
+    return bool(schema.get("examples") or schema.get("example"))
+
+
+def _check_missing_examples(tool: ToolDefinition, report: LintReport) -> None:
+    """Info when inputSchema has properties but no schema- or property-level examples."""
+    props = tool.parameters.get("properties", {})
+    if not isinstance(props, dict) or not props:
+        return
+    if _has_example(tool.parameters):
+        return
+    for param_schema in props.values():
+        if isinstance(param_schema, dict) and _has_example(param_schema):
+            return
+    report.issues.append(
+        LintIssue(
+            rule="missing-examples",
+            severity="info",
+            tool=tool.name,
+            message=(
+                "inputSchema has properties but no examples; "
+                "add schema- or property-level example values for agents."
+            ),
+        )
+    )
 
 
 def _check_name_description_mismatch(tool: ToolDefinition, report: LintReport) -> None:
