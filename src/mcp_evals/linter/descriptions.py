@@ -1,6 +1,7 @@
 """Static analysis for MCP tool descriptions."""
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from mcp_evals.models.spec import ToolCatalog, ToolDefinition
 
@@ -61,7 +62,7 @@ def _name_tokens(name: str) -> set[str]:
     return {p.lower() for p in parts if len(p) > 2}
 
 
-def _has_example(schema: dict) -> bool:
+def _has_example(schema: dict[str, Any]) -> bool:
     return bool(schema.get("examples") or schema.get("example"))
 
 
