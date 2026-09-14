@@ -1,6 +1,5 @@
 from mcp_evals.mcp_client.discover import discover_tools, load_server_config
 from mcp_evals.mcp_client.http import discover_http
-from mcp_evals.mcp_client.sse import discover_sse
 from mcp_evals.mcp_client.stdio import discover_stdio
 
 __all__ = [
@@ -10,3 +9,11 @@ __all__ = [
     "discover_tools",
     "load_server_config",
 ]
+
+
+def __getattr__(name: str):
+    if name == "discover_sse":
+        from mcp_evals.mcp_client.sse import discover_sse
+
+        return discover_sse
+    raise AttributeError(name)

@@ -88,6 +88,7 @@ def serve(host: str = "127.0.0.1", port: int = 0) -> ThreadingHTTPServer:
 
 
 if __name__ == "__main__":
-    httpd = serve(port=8765)
-    print(f"listening on http://127.0.0.1:{httpd.server_address[1]}", flush=True)
+    # 0.0.0.0 so Docker port-publish / compose networks can reach the fixture
+    httpd = serve(host="0.0.0.0", port=8765)
+    print(f"listening on http://0.0.0.0:{httpd.server_address[1]}", flush=True)
     httpd.serve_forever()

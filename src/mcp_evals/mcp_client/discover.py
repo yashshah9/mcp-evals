@@ -6,7 +6,6 @@ import yaml
 
 from mcp_evals.errors import DiscoveryError, SpecValidationError
 from mcp_evals.mcp_client.http import discover_http
-from mcp_evals.mcp_client.sse import discover_sse
 from mcp_evals.mcp_client.stdio import discover_stdio
 from mcp_evals.models.server import ServerConfig
 from mcp_evals.models.spec import ToolCatalog
@@ -59,6 +58,9 @@ def discover_tools(config: ServerConfig, base_dir: Path | None = None) -> ToolCa
     if config.transport in _SSE_TRANSPORTS:
         if not config.url:
             raise DiscoveryError(f"{config.transport} transport requires 'url'.")
+        # Lazy: httpx only required for SSE / streamable-http
+        from mcp_evals.mcp_client.sse import discover_sse
+
         return discover_sse(config.url, timeout=config.timeout_seconds)
 
     raise DiscoveryError(f"Unknown transport: {config.transport}")
