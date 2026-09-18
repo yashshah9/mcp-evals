@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-from typing import Any, BinaryIO
+from typing import Any, BinaryIO, cast
 
 from mcp_evals import __version__
 from mcp_evals.errors import DiscoveryError
@@ -96,8 +96,10 @@ def discover_stdio(
 
     try:
         assert proc.stdin is not None and proc.stdout is not None
+        stdin = cast(BinaryIO, proc.stdin)
+        stdout = cast(BinaryIO, proc.stdout)
         _write_message(
-            proc.stdin,
+            stdin,
             _rpc(
                 "initialize",
                 {
@@ -108,15 +110,15 @@ def discover_stdio(
                 1,
             ),
         )
-        init = _read_message(proc.stdout)
+        init = _read_message(stdout)
         if "error" in init:
             raise DiscoveryError(f"initialize failed: {init['error']}")
         _write_message(
-            proc.stdin,
+            stdin,
             {"jsonrpc": "2.0", "method": "notifications/initialized"},
         )
-        _write_message(proc.stdin, _rpc("tools/list", {}, 2))
-        listed = _read_message(proc.stdout)
+        _write_message(stdin, _rpc("tools/list", {}, 2))
+        listed = _read_message(stdout)
         if "error" in listed:
             raise DiscoveryError(f"tools/list failed: {listed['error']}")
         tools_raw = listed.get("result", {}).get("tools", [])
