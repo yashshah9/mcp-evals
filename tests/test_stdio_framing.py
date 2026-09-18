@@ -34,8 +34,9 @@ def test_write_message_content_length_is_bytes() -> None:
 
 
 def test_read_message_rejects_truncated_body() -> None:
-    from mcp_evals.errors import DiscoveryError
     import pytest
+
+    from mcp_evals.errors import DiscoveryError
 
     stream = BytesIO(b"Content-Length: 20\r\n\r\n{\"short\":1}")
     with pytest.raises(DiscoveryError, match="mid-message"):
