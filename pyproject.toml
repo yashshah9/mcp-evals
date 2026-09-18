@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mcp-tool-evals"
-version = "0.7.0"
+version = "0.8.0"
 description = "Behavioral evaluation and description linting for MCP servers"
 readme = "README.md"
 license = "MIT"

@@ -7,7 +7,7 @@ Behavioral evaluation and description linting for [Model Context Protocol](https
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![CI](https://github.com/yashshah9/mcp-evals/actions/workflows/ci.yml/badge.svg)](https://github.com/yashshah9/mcp-evals/actions/workflows/ci.yml)
 
-> **Status:** v0.7 — stdio + HTTP JSON-RPC + Streamable HTTP/SSE discovery, description lint (including `name-description-mismatch` + `missing-examples`), mock/OpenAI-compatible tool-selection evals, and GitHub Action PR comments.
+> **Status:** v0.8 — stdio/HTTP/SSE discovery, description lint, mock/OpenAI evals with **argument scoring**, GitHub Action PR comments.
 
 ## 60-second try
 
@@ -34,11 +34,11 @@ Protocol conformance tests verify JSON-RPC correctness. They do **not** verify w
 
 **mcp-evals** fills the behavioral layer: lint tool descriptions, define eval cases in YAML, and (next) measure tool-selection accuracy in CI.
 
-## Key features (v0.7)
+## Key features (v0.8)
 
 - **Description linter** — missing descriptions, undocumented required params, overlapping tools, ambiguous verbs, `name-description-mismatch`, `missing-examples`
 - **Live discover** — handshake a stdio, HTTP JSON-RPC, or Streamable HTTP/SSE MCP server (or load a catalog fixture)
-- **Eval runner** — `mcp-evals run` with `--model mock` (CI), `--live SERVER.yaml`, or an OpenAI-compatible endpoint
+- **Eval runner** — `mcp-evals run` with `--model mock` (CI; tool + **args**), `--live SERVER.yaml`, or an OpenAI-compatible endpoint
 - **CLI + Docker + GitHub Action** — lint and optional eval in CI without a cloud key (mock selector); PR comment or job summary with accuracy
 
 ## Architecture
@@ -204,11 +204,12 @@ mypy src
 - [x] `name-description-mismatch` linter rule
 - [x] Streamable HTTP/SSE MCP transport
 - [x] GitHub Action PR comments (accuracy + per-case table; deltas later)
+- [x] Mock selector argument inference + argument_validity scoring
 
-## Known limitations (v0.7)
+## Known limitations (v0.8)
 
 - Streamable HTTP/SSE discovery is initialize + `tools/list` only (no long-lived GET stream / resume)
-- Mock selector does not fill tool arguments (accuracy is tool-name only)
+- Mock argument filling is heuristic (schema property names + request text), not an LLM
 - Live Ollama/OpenAI evals need a reachable `--base-url`; CI uses `--model mock`
 - `examples/tools.yaml` is intentionally dirty so `mcp-evals lint` can show findings
 

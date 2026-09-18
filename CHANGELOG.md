@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] - 2026-09-18
+
+### Added
+- Mock `KeywordSelector` now **infers tool arguments** from the request using each tool’s JSON Schema `properties` / `required`
+- Argument validity is scored in CI mock runs when `expected_tool.arguments` is set (no longer tool-name-only)
+
+### Changed
+- Eval case messages include `args=ok` or the actual inferred args when expectations are present
+
 ## [0.7.0] - 2026-09-14
 
 ### Added

@@ -226,18 +226,12 @@ def run_cmd(
             color = "green" if result.status == "pass" else "red"
             table.add_row(result.case_id, f"[{color}]{result.status}[/{color}]", result.message)
         console.print(table)
-        if model == "mock":
-            console.print(
-                f"accuracy={metrics.selection_accuracy:.0%} "
-                f"threshold={report.threshold:.0%} "
-                "(mock selector scores tool names only)"
-            )
-        else:
-            console.print(
-                f"accuracy={metrics.selection_accuracy:.0%} "
-                f"args={metrics.argument_validity:.0%} "
-                f"threshold={report.threshold:.0%}"
-            )
+        console.print(
+            f"accuracy={metrics.selection_accuracy:.0%} "
+            f"args={metrics.argument_validity:.0%} "
+            f"threshold={report.threshold:.0%}"
+            + (" (mock)" if model == "mock" else "")
+        )
     if not report.passed:
         sys.exit(1)
 

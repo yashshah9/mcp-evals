@@ -398,12 +398,72 @@ def test_keyword_selector_empty_tools_raises() -> None:
 
 def test_keyword_selector_picks_best_overlap() -> None:
     tools = [
-        ToolDefinition(name="search_documents", description="Search documents by keyword."),
+        ToolDefinition(
+            name="search_documents",
+            description="Search documents by keyword.",
+            parameters={
+                "type": "object",
+                "properties": {"query": {"type": "string"}},
+                "required": ["query"],
+            },
+        ),
         ToolDefinition(name="fetch_document", description="Retrieve one document by id."),
     ]
     name, args = KeywordSelector().select("Search documents about revenue", tools)
     assert name == "search_documents"
-    assert args == {}
+    assert args.get("query") == "revenue"
+
+
+def test_keyword_selector_infers_document_id() -> None:
+    tools = [
+        ToolDefinition(
+            name="fetch_document",
+            description="Retrieve one document by id.",
+            parameters={
+                "type": "object",
+                "properties": {"document_id": {"type": "string"}},
+                "required": ["document_id"],
+            },
+        ),
+        ToolDefinition(name="search_documents", description="Search documents by keyword."),
+    ]
+    name, args = KeywordSelector().select("Get document doc-12345", tools)
+    assert name == "fetch_document"
+    assert args == {"document_id": "doc-12345"}
+
+
+def test_run_eval_suite_scores_mock_arguments() -> None:
+    catalog = ToolCatalog(
+        tools=[
+            ToolDefinition(
+                name="search_documents",
+                description="Search documents by keyword.",
+                parameters={
+                    "type": "object",
+                    "properties": {"query": {"type": "string"}},
+                    "required": ["query"],
+                },
+            ),
+        ]
+    )
+    suite = EvalSuite(
+        name="args",
+        cases=[
+            EvalCase(
+                id="search",
+                request="Find documents about quarterly revenue",
+                expected_tool=ToolExpectation(
+                    name="search_documents",
+                    arguments={"query": "quarterly revenue"},
+                ),
+            )
+        ],
+        pass_threshold=1.0,
+    )
+    report, metrics = run_eval_suite(suite, catalog, KeywordSelector(), samples=1)
+    assert report.passed
+    assert metrics.selection_accuracy == 1.0
+    assert metrics.argument_validity == 1.0
 
 
 def test_run_eval_suite_wrong_tool_fails() -> None:
