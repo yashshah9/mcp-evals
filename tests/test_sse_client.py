@@ -116,7 +116,7 @@ def test_discover_tools_sse_and_streamable_http_aliases(
 
         return ToolCatalog(tools=[ToolDefinition(name="echo", description="Echo.")])
 
-    monkeypatch.setattr("mcp_evals.mcp_client.discover.discover_sse", fake_discover_sse)
+    monkeypatch.setattr("mcp_evals.mcp_client.sse.discover_sse", fake_discover_sse)
 
     for transport in ("sse", "streamable-http"):
         config = ServerConfig(name="t", transport=transport, url="http://mcp.test/mcp")
