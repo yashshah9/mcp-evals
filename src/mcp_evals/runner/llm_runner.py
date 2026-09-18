@@ -273,7 +273,8 @@ def run_eval_suite(
     samples: int = 1,
     pass_threshold: float | None = None,
 ) -> tuple[RunReport, EvalMetrics]:
-    """Run each case `samples` times; pass if majority selects the expected tool."""
+    """Run each case `samples` times; pass if majority selects the expected tool
+    (and arguments match when ``expected_tool.arguments`` is set)."""
     threshold = pass_threshold if pass_threshold is not None else suite.pass_threshold
     results: list[CaseResult] = []
     passed_cases = 0
@@ -284,34 +285,45 @@ def run_eval_suite(
 
     for case in suite.cases:
         hits = 0
+        arg_hits = 0
         last_tool = ""
         last_args: dict[str, object] = {}
         case_latency = 0
+        expect_args = case.expected_tool.arguments
         for _ in range(n):
             start = time.monotonic()
             actual, args = selector.select(case.request, catalog.tools)
             case_latency += int((time.monotonic() - start) * 1000)
             last_tool, last_args = actual, args
-            if actual == case.expected_tool.name:
+            tool_ok = actual == case.expected_tool.name
+            if tool_ok:
                 hits += 1
+            if expect_args:
+                if tool_ok and _args_valid(expect_args, args):
+                    arg_hits += 1
+            elif tool_ok:
+                arg_hits += 1
         latency_total += case_latency
         selected = hits * 2 >= n
-        if selected:
-            passed_cases += 1
-        # Always score arguments when the case declares expected args (mock now fills them).
-        if case.expected_tool.arguments:
+        args_ok = True
+        if expect_args:
             arg_scored += 1
-            if _args_valid(case.expected_tool.arguments, last_args):
+            # Majority of samples must match expected args (not just the last draw).
+            args_ok = arg_hits * 2 >= n
+            if args_ok:
                 arg_ok += 1
         elif last_args:
             arg_scored += 1
             arg_ok += 1
-        status = "pass" if selected else "fail"
+        case_passed = selected and args_ok
+        if case_passed:
+            passed_cases += 1
+        status = "pass" if case_passed else "fail"
         arg_note = ""
-        if case.expected_tool.arguments:
+        if expect_args:
             arg_note = (
                 " args=ok"
-                if _args_valid(case.expected_tool.arguments, last_args)
+                if args_ok
                 else f" args={last_args!r}"
             )
         message = (

@@ -466,6 +466,41 @@ def test_run_eval_suite_scores_mock_arguments() -> None:
     assert metrics.argument_validity == 1.0
 
 
+def test_run_eval_suite_fails_case_on_bad_args() -> None:
+    catalog = ToolCatalog(
+        tools=[
+            ToolDefinition(
+                name="search_documents",
+                description="Search documents by keyword.",
+                parameters={
+                    "type": "object",
+                    "properties": {"query": {"type": "string"}},
+                    "required": ["query"],
+                },
+            ),
+        ]
+    )
+    suite = EvalSuite(
+        name="bad-args",
+        cases=[
+            EvalCase(
+                id="search",
+                request="Find documents about quarterly revenue",
+                expected_tool=ToolExpectation(
+                    name="search_documents",
+                    arguments={"query": "WRONG"},
+                ),
+            )
+        ],
+        pass_threshold=1.0,
+    )
+    report, metrics = run_eval_suite(suite, catalog, KeywordSelector(), samples=1)
+    assert metrics.selection_accuracy == 0.0  # case fails → not counted as pass
+    assert metrics.argument_validity == 0.0
+    assert not report.passed
+    assert report.case_results[0].status == "fail"
+
+
 def test_run_eval_suite_wrong_tool_fails() -> None:
     catalog = ToolCatalog(
         tools=[

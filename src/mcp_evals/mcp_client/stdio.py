@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-from typing import Any
+from typing import Any, BinaryIO
 
 from mcp_evals import __version__
 from mcp_evals.errors import DiscoveryError
@@ -19,31 +19,43 @@ def _rpc(method: str, params: dict[str, Any] | None, request_id: int) -> dict[st
     return payload
 
 
-def _write_message(proc: subprocess.Popen[str], message: dict[str, Any]) -> None:
-    raw = json.dumps(message)
-    assert proc.stdin is not None
-    proc.stdin.write(f"Content-Length: {len(raw.encode())}\r\n\r\n{raw}")
-    proc.stdin.flush()
+def _write_message(stdin: BinaryIO, message: dict[str, Any]) -> None:
+    raw = json.dumps(message, ensure_ascii=False).encode("utf-8")
+    stdin.write(f"Content-Length: {len(raw)}\r\n\r\n".encode("ascii") + raw)
+    stdin.flush()
 
 
-def _read_message(proc: subprocess.Popen[str]) -> dict[str, Any]:
-    assert proc.stdout is not None
+def _read_headers(stdout: BinaryIO) -> dict[str, str]:
     headers: dict[str, str] = {}
     while True:
-        line = proc.stdout.readline()
-        if line == "":
+        line = stdout.readline()
+        if line == b"":
             raise DiscoveryError("MCP server closed stdout during handshake.")
-        stripped = line.strip()
-        if stripped == "":
+        if line in (b"\r\n", b"\n"):
             break
+        stripped = line.decode("ascii", errors="replace").strip()
         if ":" in stripped:
             key, value = stripped.split(":", 1)
             headers[key.strip().lower()] = value.strip()
+    return headers
+
+
+def _read_message(stdout: BinaryIO) -> dict[str, Any]:
+    headers = _read_headers(stdout)
     length = int(headers.get("content-length", "0"))
     if length <= 0:
         raise DiscoveryError("MCP server sent a message without Content-Length.")
-    body = proc.stdout.read(length)
-    parsed = json.loads(body)
+    # Content-Length is bytes — read exactly that many from the binary pipe.
+    chunks: list[bytes] = []
+    remaining = length
+    while remaining > 0:
+        chunk = stdout.read(remaining)
+        if not chunk:
+            raise DiscoveryError("MCP server closed stdout mid-message.")
+        chunks.append(chunk)
+        remaining -= len(chunk)
+    body = b"".join(chunks)
+    parsed = json.loads(body.decode("utf-8"))
     if not isinstance(parsed, dict):
         raise DiscoveryError("MCP server returned a non-object JSON message.")
     return parsed
@@ -76,15 +88,16 @@ def discover_stdio(
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True,
+            text=False,
             env=merged_env,
         )
     except OSError as exc:
         raise DiscoveryError(f"Failed to start MCP server '{command}': {exc}") from exc
 
     try:
+        assert proc.stdin is not None and proc.stdout is not None
         _write_message(
-            proc,
+            proc.stdin,
             _rpc(
                 "initialize",
                 {
@@ -95,15 +108,15 @@ def discover_stdio(
                 1,
             ),
         )
-        init = _read_message(proc)
+        init = _read_message(proc.stdout)
         if "error" in init:
             raise DiscoveryError(f"initialize failed: {init['error']}")
         _write_message(
-            proc,
+            proc.stdin,
             {"jsonrpc": "2.0", "method": "notifications/initialized"},
         )
-        _write_message(proc, _rpc("tools/list", {}, 2))
-        listed = _read_message(proc)
+        _write_message(proc.stdin, _rpc("tools/list", {}, 2))
+        listed = _read_message(proc.stdout)
         if "error" in listed:
             raise DiscoveryError(f"tools/list failed: {listed['error']}")
         tools_raw = listed.get("result", {}).get("tools", [])

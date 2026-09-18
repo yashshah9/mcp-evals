@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.8.1] - 2026-09-19
+
+- Args gate case pass; stdio byte framing; HTTP session + initialized
+
+
 All notable changes to this project will be documented in this file.
 
 ## [0.8.0] - 2026-09-18
